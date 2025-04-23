@@ -1,0 +1,83 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from sqlalchemy import create_engine
+
+# Load dataset
+print("Loading dataset...")
+data = pd.read_csv("C:\\Users\\RGIT26\\Desktop\\B856\\SocialMediaUsersDataset.csv")
+print("Dataset loaded successfully!")
+print(f"Initial dataset shape: {data.shape}")
+print(f"First few rows:\n{data.head()}")
+
+# Data Cleaning Function
+def clean_data(df):
+    print("\nStarting data cleaning...")
+
+    # 1. Remove duplicates
+    initial_count = len(df)
+    df = df.drop_duplicates()
+    print(f"Removed {initial_count - len(df)} duplicate rows.")
+
+    # 2. Standardize Gender
+    df['Gender'] = df['Gender'].str.capitalize()
+    print("Standardized Gender column.")
+
+    # 3. Convert DOB to datetime and calculate Age
+    df['DOB'] = pd.to_datetime(df['DOB'], errors='coerce')
+    df['Age'] = pd.to_datetime('today').year - df['DOB'].dt.year
+    print("Converted DOB to datetime and calculated Age.")
+
+    # 4. Clean and standardize Interests
+    df['Interests'] = df['Interests'].str.replace("'", "", regex=False)
+    df['Interests'] = df['Interests'].str.split(', ').apply(lambda x: ', '.join(x) if isinstance(x, list) else '')
+    print("Cleaned and standardized Interests column.")
+
+    # 5. Handle missing values
+    df = df.fillna({'City': 'Unknown', 'Country': 'Unknown'})
+    print("Filled missing values in City and Country columns with 'Unknown'.")
+
+    # 6. Remove outliers in Age
+    print("\nRemoving outliers...")
+    if 'Age' in df.columns:
+        q1 = df['Age'].quantile(0.25)
+        q3 = df['Age'].quantile(0.75)
+        iqr = q3 - q1
+        lower_bound = q1 - 1.5 * iqr
+        upper_bound = q3 + 1.5 * iqr
+        df = df[(df['Age'] >= lower_bound) & (df['Age'] <= upper_bound)]
+        print("Outliers removed from Age column.")
+    else:
+        print("Age column not found. Skipping outlier removal.")
+
+    print("Data cleaning completed!")
+    return df
+
+# Clean the dataset
+cleaned_data = clean_data(data)
+print(f"\nCleaned dataset shape: {cleaned_data.shape}")
+print(f"First few rows of cleaned data:\n{cleaned_data.head()}")
+
+# Save to CSV
+output_csv_path = "C:\\Users\\RGIT26\\Desktop\\B856\\Cleaned_SocialMediaUsersDataset.csv"
+cleaned_data.to_csv(output_csv_path, index=False)
+print(f"\nCleaned data saved to CSV at: {output_csv_path}")
+
+# Save to SQLite database
+print("\nSaving cleaned data to database...")
+engine = create_engine('sqlite:///C:\\Users\\RGIT26\\Desktop\\B856\\social_media_data.db')
+cleaned_data.to_sql('users', con=engine, if_exists='replace', index=False)
+print("Cleaned data saved to database successfully.")
+
+# Add a new column: Number of interests
+cleaned_data['Num_Interests'] = cleaned_data['Interests'].apply(lambda x: len(x.split(', ')) if isinstance(x, str) else 0)
+
+# Scatter Plot: Age vs Number of Interests
+print("\nCreating scatter plot...")
+plt.figure(figsize=(10, 6))
+plt.scatter(cleaned_data['Age'], cleaned_data['Num_Interests'], alpha=0.5, color='b')
+plt.title('Scatter Plot: Age vs. Number of Interests')
+plt.xlabel('Age')
+plt.ylabel('Number of Interests')
+plt.grid(True)
+plt.show()
+print("Scatter plot created successfully!")
