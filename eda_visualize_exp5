@@ -1,0 +1,83 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the dataset
+df = pd.read_csv(r"C:\Users\Ayushi\Desktop\submissions\SMA\tiktok_dataset.csv")
+
+# Display dataset info
+print("Dataset Info:")
+print(df.info())
+
+# Display first 5 rows
+print("\nFirst 5 rows of the dataset:")
+print(df.head())
+
+# Summary statistics
+print("\nSummary Statistics:")
+print(df.describe())
+
+# Check for missing values
+print("\nMissing Values:")
+print(df.isnull().sum())
+
+# --- Histogram of Video Duration ---
+plt.figure(figsize=(10, 6))
+sns.histplot(df['video_duration_sec'], bins=30, kde=True)
+plt.title('Histogram of Video Duration (seconds)')
+plt.xlabel('Video Duration (seconds)')
+plt.ylabel('Frequency')
+plt.grid(True)
+plt.show()
+
+# --- Line Chart: Video Views Over Time (Top 1000 rows) ---
+df_line_graph = df.head(1000)
+plt.figure(figsize=(10, 6))
+plt.plot(df_line_graph.index, df_line_graph['video_view_count'], marker='o', linestyle='-')
+plt.title('Line Chart of Video Views Over Time (Limited Data)')
+plt.xlabel('Index')
+plt.ylabel('Video View Count')
+plt.grid(True)
+plt.show()
+
+# --- Pie Chart: Claim Status Distribution ---
+claim_status_counts = df['claim_status'].value_counts()
+plt.figure(figsize=(8, 8))
+plt.pie(claim_status_counts, labels=claim_status_counts.index, autopct='%1.1f%%', startangle=140)
+plt.title('Pie Chart of Claim Status Distribution')
+plt.show()
+
+# --- Scatter Plot: Likes vs Shares colored by Verified Status ---
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='video_like_count', y='video_share_count', hue='verified_status', data=df)
+plt.title('Scatter Plot of Video Likes vs. Video Shares')
+plt.xlabel('Video Likes')
+plt.ylabel('Video Shares')
+plt.grid(True)
+plt.show()
+
+# --- Box Plot: Views by Author Ban Status ---
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='author_ban_status', y='video_view_count', data=df)
+plt.title('Box Plot of Video Views by Author Ban Status')
+plt.xlabel('Author Ban Status')
+plt.ylabel('Video View Count')
+plt.grid(True)
+plt.show()
+
+# --- Correlation Matrix Heatmap ---
+numeric_df = df.select_dtypes(include=['number'])
+plt.figure(figsize=(12, 8))
+sns.heatmap(numeric_df.corr(), annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5)
+plt.title("Correlation Matrix Heatmap")
+plt.show()
+
+# --- Bar Plot: Top 10 Videos by View Count ---
+top_videos = df.nlargest(10, 'video_view_count')
+plt.figure(figsize=(12, 6))
+sns.barplot(y='video_id', x='video_view_count', data=top_videos, palette="viridis")
+plt.title('Top 10 Videos by View Count')
+plt.xlabel('View Count')
+plt.ylabel('Video ID')
+plt.grid(True)
+plt.show()
